@@ -1,6 +1,5 @@
 var jwt = require('jsonwebtoken');
-var googleUserQueries = require('../server/db/queries/google_users');
-var GoogleAuthProviderService = require('./auth_providers/GoogleAuthProviderService')
+var userQueries = require('../server/db/queries/users');
 const { default: axios } = require("axios");
 
 class UserService {
@@ -17,31 +16,27 @@ class UserService {
         }
     }
 
-    async login(loginRequest) {
+    async login(firebaseAdmin, loginRequest) {
         let user = null;
-        if (loginRequest.authProvider == 'google') {
-            let verification;
-            verification = await new GoogleAuthProviderService().verify(loginRequest.token);
-            const googleUser = await googleUserQueries.getGoogleUserBySubject(verification.sub);
-            if (!googleUser) {
-                user = await this.createUserFromGoogleAuth(verification);
-            } else {
-                user = googleUser;
-            }
-        } else {
-            throw "Auth provider not supported";
+        let verification = await firebaseAdmin
+            .auth()
+            .verifyIdToken(loginRequest.token);
+
+        user = await userQueries.getUserByUid(verification.sub);
+        if (!user) {
+            user = await this.createUserFromVerification(verification);
         }
 
         user.token = this.generateUserToken(user);
-        delete user.subject;
+        delete user.uid;
         return user;
     }
 
     async refresh(token) {
         // no need to verify since this function is behind an auth middleware
         const payload = jwt.decode(token);
-        const googleUser = await googleUserQueries.getGoogleUser(payload.sub);
-        return this.generateUserToken(googleUser);
+        const user = await userQueries.getUser(payload.sub);
+        return this.generateUserToken(user);
     }
 
     generateUserToken(user) {
@@ -55,24 +50,20 @@ class UserService {
         return token;
     }
 
-    async createUserFromGoogleAuth(googleAuth) {
+    async createUserFromVerification(verification) {
         this.addChatUser({
-            subject: googleAuth.sub,
-            ...googleAuth
+            uid: verification.sub,
+            ...verification
         });
-        let [googleUser] = await googleUserQueries.addGoogleUser({
-            subject: googleAuth.sub,
-            name: googleAuth.name,
-            email: googleAuth.email,
-            picture: googleAuth.picture,
+        let [user] = await userQueries.addUser({
+            uid: verification.sub,
+            name: verification.name,
+            email: verification.email,
+            picture: verification.picture,
         });
 
 
-        return googleUser;
-    }
-
-    async verify(token) {
-        return GoogleAuthProviderService.verify(token);
+        return user;
     }
 
     async addChatUser(user) {
@@ -90,7 +81,7 @@ class UserService {
 
     getUserIdentity(user) {
         const name = user.name.toLocaleLowerCase().replace(/\W/g, '').replace(/\s/, '_');
-        return `${name}_${user.subject}`;
+        return `${name}_${user.uid}`;
     }
 }
 

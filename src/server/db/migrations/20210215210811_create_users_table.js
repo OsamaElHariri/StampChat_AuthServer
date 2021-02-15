@@ -1,8 +1,8 @@
 
 exports.up = function (knex) {
-    return knex.schema.createTable('google_users', (table) => {
+    return knex.schema.createTable('users', (table) => {
         table.increments();
-        table.string('subject').notNullable();
+        table.string('uid').notNullable();
         table.string('name');
         table.string('email');
         table.string('picture');
@@ -10,5 +10,5 @@ exports.up = function (knex) {
 };
 
 exports.down = function (knex) {
-    return knex.schema.dropTable('google_users');
+    return knex.schema.dropTable('users');
 };
