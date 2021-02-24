@@ -4,7 +4,7 @@ const { default: axios } = require("axios");
 
 class UserService {
     getTokenSecret() {
-        return "super_secret_key!";
+        return process.env.PRIVATE_KEY || "super_secret_key!";
     }
 
     async testChatServer() {
@@ -72,7 +72,7 @@ class UserService {
                 name: user.name,
                 identity: this.getUserIdentity(user)
             });
-
+            if (res.status  >= 400) throw "Could not create chat user";
             return res.data;
         } catch (error) {
             throw error;
