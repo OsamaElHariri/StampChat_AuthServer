@@ -62,7 +62,6 @@ class UserService {
             picture: verification.picture,
         });
 
-
         return user;
     }
 

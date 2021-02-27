@@ -10,7 +10,7 @@ function getUserByUid(uid) {
 function addUser(user) {
     return knex('users')
         .insert(user)
-        .returning(['email', 'name', 'picture']);
+        .returning('*');
 }
 
 function getUser(userId) {
