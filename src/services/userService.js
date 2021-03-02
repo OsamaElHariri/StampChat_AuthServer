@@ -67,7 +67,7 @@ class UserService {
 
     async addChatUser(user) {
         try {
-            const res = await axios.post(`http://${process.env.STAMP_CHAT_CHANNELS_SERVICE_HOST}:${process.env.STAMP_CHAT_CHANNELS_SERVICE_PORT}` + "/users", {
+            const res = await axios.post(`http://${process.env.STAMP_CHAT_CHANNELS_SERVICE_HOST}:${process.env.STAMP_CHAT_CHANNELS_SERVICE_PORT}` + "/internal/users", {
                 name: user.name,
                 identity: this.getUserIdentity(user)
             });
